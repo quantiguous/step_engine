@@ -113,6 +113,22 @@ module GetStepMatchers
         "expected to be action REVERSE for previous step at #{prev_step_no} of step #{step} instead of #{response}"
     end
   end  
+  
+  RSpec::Matchers.define :be_first_step_of_branch do |branch_no, step_no|
+    match do |response|
+      expect(response[:txn_status]).to eq('IN_PROGRESS')
+      expect(response[:next_step_no]).to eq(step_no)
+      expect(response[:next_step_action]).to eq('DO')
+      expect(response[:next_step_branch_no]).to eq(branch_no)
+      expect(response[:fault_code]).to be_nil
+      expect(response[:fault_subcode]).to be_nil
+      expect(response[:fault_reason]).to be_nil
+    end
+    
+    failure_message do |response|
+        "expected to be first step #{step_no} of branch #{branch_no} instead of #{response}"
+    end
+  end    
     
   
   RSpec::Matchers.define :be_requery do |step|
