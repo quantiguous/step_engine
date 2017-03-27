@@ -89,14 +89,13 @@ module GetStepMatchers
       expect(response[:txn_status]).to eq('IN_PROGRESS')
       expect(response[:next_step_no]).to eq(step[:step_no] + 1)
       expect(response[:next_step_action]).to eq('DO')
-      expect(response[:next_step_branch_no]).to eq(step[:branch_no])
       expect(response[:fault_code]).to be_nil
       expect(response[:fault_subcode]).to be_nil
       expect(response[:fault_reason]).to be_nil
     end
     
     failure_message do |response|
-        "expected next_step_action to be REQUERY of step #{step} instead of #{response}"
+        "expected next_step_action to be DO of step #{step} instead of #{response}"
     end
   end  
   
@@ -105,7 +104,6 @@ module GetStepMatchers
       expect(response[:txn_status]).to eq('IN_PROGRESS')
       expect(response[:next_step_no]).to eq(step[:step_no] - 1)
       expect(response[:next_step_action]).to eq('REVERSE')
-      expect(response[:next_step_branch_no]).to eq(step[:branch_no])
       expect(response[:fault_code]).to be_nil
       expect(response[:fault_subcode]).to be_nil
       expect(response[:fault_reason]).to be_nil

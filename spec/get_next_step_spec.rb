@@ -2,83 +2,87 @@ require_relative 'matchers'
 
 class Setup
   
-  def initialize(auditable_type, steps_cnt = 1)
+  def initialize(auditable_type, steps_cnt = 1, branch_cnt = 1)
     x = {do_is_optional: 'N', do_must_complete: 'N', max_retries: 0, do_is_idempotent: 'N', do_has_requery: 'N', skip_reversal: 'N', reversal_is_idempotent: 'N', reversal_has_requery: 'N'}
 
     plsql.sc_service_op_steps.delete auditable_type: auditable_type
-    (1..steps_cnt).each do |i|
-      plsql.sc_service_op_steps.insert x.merge({id: plsql.sc_service_op_steps_seq.nextval, auditable_type: auditable_type, branch_no: 1, step_no: i, step_name: "step #{i}"})
+    step_no = 1
+    (1..branch_cnt).each do |b|
+      (1..steps_cnt).each do |i|
+        plsql.sc_service_op_steps.insert x.merge({id: plsql.sc_service_op_steps_seq.nextval, auditable_type: auditable_type, branch_no: b, step_no: step_no, step_name: "step #{step_no}"})
+        step_no = step_no + 1
+      end
     end
     plsql.commit
     
     @auditable_type = auditable_type
   end
 
-  def do_must_complete(step_no = 1)
+  def do_must_complete(step_no)
     plsql.sc_service_op_steps.update do_is_optional: 'N', do_must_complete: 'Y', max_retries: 0, where: {auditable_type: @auditable_type, step_no: step_no}
   end
   
-  def do_is_optional(step_no = 1)
+  def do_is_optional(step_no)
     plsql.sc_service_op_steps.update do_is_optional: 'Y', do_must_complete: 'N', max_retries: 0, where: {auditable_type: @auditable_type, step_no: step_no}
   end
   
-  def do_is_not_optional(step_no = 1)
+  def do_is_not_optional(step_no)
     plsql.sc_service_op_steps.update do_is_optional: 'N', do_must_complete: 'N', max_retries: 0, where: {auditable_type: @auditable_type, step_no: step_no}
   end
   
-  def skip_reversal(from_step_no = 1, to_step_no = 1)
+  def skip_reversal(from_step_no, to_step_no)
     (to_step_no..from_step_no-1).each do |s|
       plsql.sc_service_op_steps.update skip_reversal: 'Y', reversal_is_idempotent: 'N', reversal_has_requery: 'N', where: {auditable_type: @auditable_type, step_no: s}
     end
   end
 
-  def do_not_skip_reversal(from_step_no = 1, to_step_no = 1)
-    (to_step_no..from_step_no-1).each do |s|
+  def do_not_skip_reversal(from_step_no, to_step_no)
+    (to_step_no..from_step_no-1).each do |s| 
       plsql.sc_service_op_steps.update skip_reversal: 'N', reversal_is_idempotent: 'N', reversal_has_requery: 'N', where: {auditable_type: @auditable_type, step_no: s}
     end  
   end
     
-  def reversal_has_requery(step_no = 1)
+  def reversal_has_requery(step_no)
     plsql.sc_service_op_steps.update skip_reversal: 'N', reversal_is_idempotent: 'N', reversal_has_requery: 'Y', where: {auditable_type: @auditable_type, step_no: step_no}
   end
 
-  def reversal_does_not_have_requery(step_no = 1)
+  def reversal_does_not_have_requery(step_no)
     plsql.sc_service_op_steps.update skip_reversal: 'N', reversal_is_idempotent: 'N', reversal_has_requery: 'N', where: {auditable_type: @auditable_type, step_no: step_no}
   end
 
-  def reversal_is_idempotent(step_no = 1)
+  def reversal_is_idempotent(step_no)
     plsql.sc_service_op_steps.update skip_reversal: 'N', reversal_is_idempotent: 'Y', reversal_has_requery: 'N', where: {auditable_type: @auditable_type, step_no: step_no}
   end
 
-  def reversal_is_not_idempotent(step_no = 1)
+  def reversal_is_not_idempotent(step_no)
     plsql.sc_service_op_steps.update skip_reversal: 'N', reversal_is_idempotent: 'N', reversal_has_requery: 'N', where: {auditable_type: @auditable_type, step_no: step_no}
   end
   
-  def do_has_requery(step_no = 1)
+  def do_has_requery(step_no)
     plsql.sc_service_op_steps.update do_is_idempotent: 'N', do_has_requery: 'Y', where: {auditable_type: @auditable_type, step_no: step_no}
   end
 
-  def do_does_not_have_requery(step_no = 1)
+  def do_does_not_have_requery(step_no)
     plsql.sc_service_op_steps.update do_is_idempotent: 'N', do_has_requery: 'N', where: {auditable_type: @auditable_type, step_no: step_no}
   end
     
-  def do_is_idempotent(step_no = 1)
+  def do_is_idempotent(step_no)
     plsql.sc_service_op_steps.update do_is_idempotent: 'Y', do_has_requery: 'N', where: {auditable_type: @auditable_type, step_no: step_no}
   end
   
-  def do_is_not_idempotent(step_no = 1)
+  def do_is_not_idempotent(step_no)
     plsql.sc_service_op_steps.update do_is_idempotent: 'N', do_has_requery: 'N', where: {auditable_type: @auditable_type, step_no: step_no}
   end
   
-  def max_retries_one(step_no = 1)
+  def max_retries_one(step_no)
     plsql.sc_service_op_steps.update max_retries: 1, where: {auditable_type: @auditable_type, step_no: step_no}
   end
   
-  def max_retries_zero(step_no = 1)
+  def max_retries_zero(step_no)
     plsql.sc_service_op_steps.update max_retries: 0, where: {auditable_type: @auditable_type, step_no: step_no}
   end
   
-  def pretty_print(step_no = 1)
+  def pretty_print(step_no)
     p plsql.select(:first, "select * from sc_service_op_steps where auditable_type = '#{@auditable_type}' and step_no = #{step_no}")
   end
 end
@@ -86,11 +90,12 @@ end
 describe 'Step' do
   include GetStepMatchers
     
-  let (:step) { { step_no: 1, branch_no: 1, step_status: nil, step_action: nil, step_attempt_cnt: 1, switch_to_branch: nil} }
+  let (:step) { { step_no: 0, step_status: nil, step_action: nil, step_attempt_cnt: 1, switch_to_branch: nil, pending_action: nil} }
     
   def get_next_step
     plsql_result = plsql.pk_qg_sc_step_engine.get_next_step(
       pi_auditable_type: step[:auditable_type], 
+      pi_pending_action: step[:pending_action], 
       pi_step_no: step[:step_no], 
       pi_step_status: step[:step_status], 
       pi_step_action: step[:step_action], 
@@ -259,6 +264,8 @@ describe 'Step' do
   RSpec.shared_context 'first step' do
     # cases for the first step, irrespective of the no of steps in the branch
     context 'for first step' do
+      let (:step) { super().merge({step_no: first_step_no}) }
+      
       context 'with status REVERSING' do
         let (:step) { super().merge({step_status: 'REVERSING'}) }
       
@@ -273,8 +280,8 @@ describe 'Step' do
         it 'should get txn_status FAILED' do
           expect(get_next_step).to be_failed
         end
-      end      
-       
+      end  
+             
       context 'with status REVERSED' do
         let (:step) { super().merge({step_status: 'REVERSING'}) }
 
@@ -282,6 +289,7 @@ describe 'Step' do
           expect(get_next_step).to be_onhold.with_conflict
         end
       end
+            
     end
   end
   
@@ -312,21 +320,22 @@ describe 'Step' do
         it 'should get txn_status ONHOLD with conflict' do
           expect(get_next_step).to be_onhold.with_conflict
         end
-      end
+      end    
     end
   end
   
   RSpec.shared_context 'first and only step' do
     # cases when no_of_steps = 1 for a branch
     context 'for first and only step' do
+      let (:step) { super().merge({step_no: first_step_no}) }
       
       context 'with status TRIED' do
         context 'with do_is_optional' do
           before(:all) do
-            @setup.do_is_optional
+            @setup.do_is_optional(@first_step_no)
           end
           after(:all) do
-            @setup.do_is_not_optional
+            @setup.do_is_not_optional(@first_step_no)
           end
 
           let (:step) { super().merge({step_status: 'TRIED'}) }
@@ -334,7 +343,7 @@ describe 'Step' do
           it 'should get txn_status FAILED' do
             expect(get_next_step).to be_failed
           end
-        end
+        end        
       end      
     end
   end
@@ -363,7 +372,7 @@ describe 'Step' do
           it 'should get txn_status COMPLETED' do            
             expect(get_next_step).to be_completed
           end
-        end
+        end        
       end
       
     end
@@ -385,17 +394,16 @@ describe 'Step' do
         
         context 'with skip_reversal = Y for all remaining previous steps' do
           before(:all) do
-            @setup.skip_reversal(@step_no)
-            plsql.commit
+            @setup.skip_reversal(@step_no, @first_step_no)
           end
           after(:all) do
-            @setup.do_not_skip_reversal(@step_no)
+            @setup.do_not_skip_reversal(@step_no, @first_step_no)
           end
 
           it 'should get txn_status FAILED' do            
             expect(get_next_step).to be_failed
           end
-        end
+        end        
       end
       
     end
@@ -408,10 +416,21 @@ describe 'Step' do
 
       context 'with status DONE' do
         let (:step) { super().merge({step_status: 'DONE'}) }
+        context 'with pending_action N' do
+          let (:step) { super().merge({pending_action: 'N'}) }
         
-        it 'should get next_step_no with action DO' do            
-          expect(get_next_step).to be_next_step(step)
+          it 'should get next_step_no with action DO' do            
+            expect(get_next_step).to be_next_step(step)
+          end
         end
+
+        context 'with pending_action Y' do
+          let (:step) { super().merge({pending_action: 'Y'}) }
+        
+          it 'should get txn_status ONHOLD' do 
+            expect(get_next_step).to be_onhold.with_pending_action
+          end
+        end        
       end
 
       context 'with status TRIED' do
@@ -423,10 +442,22 @@ describe 'Step' do
         end
         let (:step) { super().merge({step_status: 'TRIED'}) }
         
-        it 'should get next_step_no with action DO' do            
-          expect(get_next_step).to be_next_step(step)
+        context 'with pending_action N' do
+          let (:step) { super().merge({pending_action: 'N'}) }
+        
+          it 'should get next_step_no with action DO' do            
+            expect(get_next_step).to be_next_step(step)
+          end
         end
-      end
+        
+        context 'with pending_action Y' do
+          let (:step) { super().merge({pending_action: 'Y'}) }
+        
+          it 'should get txn_status ONHOLD' do 
+            expect(get_next_step).to be_onhold.with_pending_action
+          end
+        end        
+      end     
     end
   end
   
@@ -438,18 +469,28 @@ describe 'Step' do
       context 'with status REVERSED' do
         let (:step) { super().merge({step_status: 'REVERSED'}) }
         
-        context 'with skip_reversal = N for previous step' do        
-          it 'should get prev_step_no with action REVERSE' do            
-            expect(get_next_step).to be_prev_step(step)
+        context 'with skip_reversal = N for previous step' do
+          context 'with pending_action = N' do
+            it 'should get prev_step_no with action REVERSE' do            
+              expect(get_next_step).to be_prev_step(step)
+            end
           end
+
+          context 'with pending_action = Y' do
+            let (:step) { super().merge({pending_action: 'Y'}) }
+            it 'should get txn_status ONHOLD' do
+              expect(get_next_step).to be_onhold.with_pending_action
+            end
+          end
+
         end
         
         context 'with skip_reversal = Y for all remaining previous steps' do
           before(:all) do
-            @setup.skip_reversal(@step_no)
+            @setup.skip_reversal(@step_no, @first_step_no)
           end
           after(:all) do
-            @setup.do_not_skip_reversal(@step_no)
+            @setup.do_not_skip_reversal(@step_no, @first_step_no)
           end
 
           it 'should get txn_status REVERSED' do            
@@ -525,6 +566,8 @@ describe 'Step' do
                   expect(get_next_step).to be_requery(step)
                 end
               end
+
+                            
             end
     
           end
@@ -611,7 +654,7 @@ describe 'Step' do
                 it 'should get next_action REVERSE' do
                   expect(get_next_step).to retry_reverse(step)
                 end
-              end
+              end               
             end
           end          
         end
@@ -620,33 +663,71 @@ describe 'Step' do
   end
   
   
-  context '(steps: 1)' do
+  # context '(steps: 1)' do
+  #   before(:all) do
+  #     @setup = Setup.new('one step',1,2)
+  #     @first_step_no = 2
+  #     @last_step_no = @last_step_no
+  #     @step_no = @first_step_no
+  #   end
+  #
+  #   let (:first_step_no) { 2 }
+  #   let (:last_step_no) { first_step_no }
+  #   let (:step_no) { first_step_no }
+  #   let (:step) { super().merge({auditable_type: 'one step'})}
+  #
+  #   include_context 'first step'
+  #   include_context 'first and only step'
+  #   include_context 'last step'
+  #   include_context 'any step'
+  # end
+
+
+  # context '(steps: = 2)' do
+  #   before(:all) do
+  #     @setup = Setup.new('two steps', 2, 3)
+  #     @first_step_no = 3
+  #     @last_step_no = 4
+  #   end
+  #
+  #   let (:first_step_no) { 3 }
+  #   let (:last_step_no) { 4 }
+  #   let (:step) { super().merge({auditable_type: 'two steps'})}
+  #
+  #   include_context 'first step'
+  #   include_context 'last step'
+  #   include_context 'last step of many'
+  #
+  #   context '' do
+  #     before(:all) do
+  #       @step_no = @first_step_no
+  #     end
+  #     let (:step_no) { first_step_no }
+  #     include_context 'any step'
+  #     include_context 'except last of many steps'
+  #   end
+  #
+  #   context '' do
+  #     before(:all) do
+  #       @step_no = @last_step_no
+  #     end
+  #     let (:step_no) { last_step_no }
+  #     include_context 'any step'
+  #     include_context 'except first of many steps'
+  #   end
+  #
+  # end
+ 
+  context '(steps: = 5)' do
     before(:all) do
-      @setup = Setup.new('one step')
-      @last_step_no = 1
-      @step_no = 1
+      @setup = Setup.new('five steps', 5, 3)
+      @first_step_no = 6
+      @last_step_no = 10
     end
-
-    let (:last_step_no) { 1 }
-    let (:step) { super().merge({auditable_type: 'one step'})}
-
-    include_context 'first step'
-    include_context 'first and only step'
-    include_context 'last step'
-
-    let (:step_no) { 1 }
-    include_context 'any step'
-  end
-
-
-  context '(steps: = 2)' do
-    before(:all) do
-      @setup = Setup.new('two steps', 2)
-      @last_step_no = 2
-    end
-
-    let (:last_step_no) { 2 }
-    let (:step) { super().merge({auditable_type: 'two steps'})}
+    
+    let (:first_step_no) { 6 }
+    let (:last_step_no) { 10 }
+    let (:step) { super().merge({auditable_type: 'five steps'})}
 
     include_context 'first step'
     include_context 'last step'
@@ -654,65 +735,33 @@ describe 'Step' do
 
     context '' do
       before(:all) do
-        @step_no = 1
+        @step_no = @first_step_no
       end
-      let (:step_no) { 1 }
+      let (:step_no) { first_step_no }
       include_context 'any step'
       include_context 'except last of many steps'
     end
 
+    (1..3).each do |i|
+      context '' do
+        before(:all) do
+          @step_no = @first_step_no + i
+        end
+        let (:step_no) { first_step_no + i }
+        include_context 'any step'
+        include_context 'except last of many steps'
+        include_context 'except first of many steps'
+        include_context 'except first and last of many steps'
+      end
+    end
+
     context '' do
       before(:all) do
-        @step_no = 2
+        @step_no = @last_step_no
       end
-      let (:step_no) { 2 }
+      let (:step_no) { last_step_no }
       include_context 'any step'
       include_context 'except first of many steps'
     end
-
-  end
-
-  context '(steps: = 3)' do
-    before(:all) do
-      @setup = Setup.new('three steps', 3)
-      @last_step_no = 3
-    end
-
-    let (:last_step_no) { 3 }
-    let (:step) { super().merge({auditable_type: 'three steps'})}
-
-    include_context 'first step'
-    include_context 'last step'
-    include_context 'last step of many'
-
-    context '' do
-      before(:all) do
-        @step_no = 1
-      end
-      let (:step_no) { 1 }
-      include_context 'any step'
-      include_context 'except last of many steps'
-    end
-
-    context '' do
-      before(:all) do
-        @step_no = 2
-      end
-      let (:step_no) { 2 }
-      include_context 'any step'
-      include_context 'except last of many steps'
-      include_context 'except first of many steps'
-      include_context 'except first and last of many steps'
-    end
-
-    context '' do
-      before(:all) do
-        @step_no = 3
-      end
-      let (:step_no) { 3 }
-      include_context 'any step'
-      include_context 'except first of many steps'
-    end
-  end
-  
+  end 
 end
