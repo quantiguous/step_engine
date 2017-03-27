@@ -75,6 +75,10 @@ module GetStepMatchers
       @fault_code = 'ns:E412'
     end
     
+    chain :with_pending_action do
+     @fault_code = 'ns:E202'
+    end
+    
     failure_message do |response|
         "expected txn_status to be ONHOLD instead of #{response}"
     end
@@ -118,7 +122,6 @@ module GetStepMatchers
       expect(response[:txn_status]).to eq('IN_PROGRESS')
       expect(response[:next_step_no]).to eq(step[:step_no])
       expect(response[:next_step_action]).to eq('REQUERY')
-      expect(response[:next_step_branch_no]).to eq(step[:branch_no])
       expect(response[:fault_code]).to be_nil
       expect(response[:fault_subcode]).to be_nil
       expect(response[:fault_reason]).to be_nil
@@ -134,7 +137,6 @@ module GetStepMatchers
       expect(response[:txn_status]).to eq('IN_PROGRESS')
       expect(response[:next_step_no]).to eq(step[:step_no])
       expect(response[:next_step_action]).to eq('DO')
-      expect(response[:next_step_branch_no]).to eq(step[:branch_no])
       expect(response[:fault_code]).to be_nil
       expect(response[:fault_subcode]).to be_nil
       expect(response[:fault_reason]).to be_nil
@@ -150,7 +152,6 @@ module GetStepMatchers
       expect(response[:txn_status]).to eq('IN_PROGRESS')
       expect(response[:next_step_no]).to eq(step[:step_no])
       expect(response[:next_step_action]).to eq('REVERSE')
-      expect(response[:next_step_branch_no]).to eq(step[:branch_no])
       expect(response[:fault_code]).to be_nil
       expect(response[:fault_subcode]).to be_nil
       expect(response[:fault_reason]).to be_nil
