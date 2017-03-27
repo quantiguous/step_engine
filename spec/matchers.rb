@@ -99,10 +99,10 @@ module GetStepMatchers
     end
   end  
   
-  RSpec::Matchers.define :be_prev_step do |step|
+  RSpec::Matchers.define :be_prev_step do |step, prev_step_no|
     match do |response|
       expect(response[:txn_status]).to eq('IN_PROGRESS')
-      expect(response[:next_step_no]).to eq(step[:step_no] - 1)
+      expect(response[:next_step_no]).to eq(prev_step_no.nil? ? step[:step_no] - 1 : prev_step_no)
       expect(response[:next_step_action]).to eq('REVERSE')
       expect(response[:fault_code]).to be_nil
       expect(response[:fault_subcode]).to be_nil
@@ -110,7 +110,7 @@ module GetStepMatchers
     end
     
     failure_message do |response|
-        "expected to be action REVERSE for previous step of step #{step} instead of #{response}"
+        "expected to be action REVERSE for previous step at #{prev_step_no} of step #{step} instead of #{response}"
     end
   end  
     
