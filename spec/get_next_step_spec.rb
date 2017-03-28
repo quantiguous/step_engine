@@ -721,51 +721,51 @@ describe 'Step' do
   # end
   #
   # context '(steps: = 5)' do
-  #   before(:all) do
-  #     @setup = Setup.new('five steps', 5, 3)
-  #     @first_step_no = 6
-  #     @last_step_no = 10
-  #   end
-  #
-  #   let (:first_step_no) { 6 }
-  #   let (:last_step_no) { 10 }
-  #   let (:step) { super().merge({auditable_type: 'five steps'})}
-  #
-  #   include_context 'first step'
-  #   include_context 'last step'
-  #   include_context 'last step of many'
-  #
-  #   context '' do
-  #     before(:all) do
-  #       @step_no = @first_step_no
-  #     end
-  #     let (:step_no) { first_step_no }
-  #     include_context 'any step'
-  #     include_context 'except last of many steps'
-  #   end
-  #
-  #   (1..3).each do |i|
-  #     context '' do
-  #       before(:all) do
-  #         @step_no = @first_step_no + i
-  #       end
-  #       let (:step_no) { first_step_no + i }
-  #       include_context 'any step'
-  #       include_context 'except last of many steps'
-  #       include_context 'except first of many steps'
-  #       include_context 'except first and last of many steps'
-  #     end
-  #   end
-  #
-  #   context '' do
-  #     before(:all) do
-  #       @step_no = @last_step_no
-  #     end
-  #     let (:step_no) { last_step_no }
-  #     include_context 'any step'
-  #     include_context 'except first of many steps'
-  #   end
-  # end
+ #    before(:all) do
+ #      @setup = Setup.new('five steps', 5, 3)
+ #      @first_step_no = 6
+ #      @last_step_no = 10
+ #    end
+ #
+ #    let (:first_step_no) { 6 }
+ #    let (:last_step_no) { 10 }
+ #    let (:step) { super().merge({auditable_type: 'five steps'})}
+ #
+ #    include_context 'first step'
+ #    include_context 'last step'
+ #    include_context 'last step of many'
+ #
+ #    context '' do
+ #      before(:all) do
+ #        @step_no = @first_step_no
+ #      end
+ #      let (:step_no) { first_step_no }
+ #      include_context 'any step'
+ #      include_context 'except last of many steps'
+ #    end
+ #
+ #    (1..3).each do |i|
+ #      context '' do
+ #        before(:all) do
+ #          @step_no = @first_step_no + i
+ #        end
+ #        let (:step_no) { first_step_no + i }
+ #        include_context 'any step'
+ #        include_context 'except last of many steps'
+ #        include_context 'except first of many steps'
+ #        include_context 'except first and last of many steps'
+ #      end
+ #    end
+ #
+ #    context '' do
+ #      before(:all) do
+ #        @step_no = @last_step_no
+ #      end
+ #      let (:step_no) { last_step_no }
+ #      include_context 'any step'
+ #      include_context 'except first of many steps'
+ #    end
+ #  end
   
   context 'switch branch' do
     before(:all) do
