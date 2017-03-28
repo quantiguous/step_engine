@@ -97,9 +97,17 @@ describe 'Setup' do
     end    
     
     context 'when a step is skipped' do
-      it 'should be correct' do
+      it 'should be incorrect' do
         create(step)
         create(step.merge(step_no: 3), false)
+        result = plsql.pk_qg_sc_step_engine.verify_setup(pi_auditable_type: auditable_type, po_fault_code: nil, po_fault_subcode: nil, po_fault_reason: nil)
+        expect(result).to be_incorrect
+      end
+    end    
+
+    context 'when a wait internval is not a multiple of 1000' do
+      it 'should be incorrect' do
+        create(step.merge(ms_to_nxt_step: 1023))
         result = plsql.pk_qg_sc_step_engine.verify_setup(pi_auditable_type: auditable_type, po_fault_code: nil, po_fault_subcode: nil, po_fault_reason: nil)
         expect(result).to be_incorrect
       end

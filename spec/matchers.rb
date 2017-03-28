@@ -114,12 +114,11 @@ module GetStepMatchers
     end
   end  
   
-  RSpec::Matchers.define :be_first_step_of_branch do |branch_no, step_no|
+  RSpec::Matchers.define :be_step_no do |step_no|
     match do |response|
       expect(response[:txn_status]).to eq('IN_PROGRESS')
       expect(response[:next_step_no]).to eq(step_no)
       expect(response[:next_step_action]).to eq('DO')
-      expect(response[:next_step_branch_no]).to eq(branch_no)
       expect(response[:fault_code]).to be_nil
       expect(response[:fault_subcode]).to be_nil
       expect(response[:fault_reason]).to be_nil
@@ -190,9 +189,14 @@ module GetStepMatchers
   
   RSpec::Matchers.define :be_incorrect do
     match do |response|
-      expect(response[:po_fault_code]).to eq('ns:E400')
+      expect(response[:po_fault_code]).to eq(@fault_code.nil? ? 'ns:E400' : @fault_code)
       expect(response[:po_fault_reason]).to_not be_nil
     end
+    
+    chain :with_not_acceptible do
+      @fault_code = 'ns:E406'
+    end
+    
     
     failure_message do |response|
         "expected result to be incorrect instead of #{response}"

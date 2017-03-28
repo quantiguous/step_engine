@@ -90,12 +90,11 @@ end
 describe 'Step' do
   include GetStepMatchers
     
-  let (:step) { { step_no: 0, step_status: nil, step_action: nil, step_attempt_cnt: 1, switch_to_branch: nil, pending_action: nil} }
+  let (:step) { { step_no: 0, step_status: nil, step_action: nil, step_attempt_cnt: 1, switch_to_branch: nil } }
   
   def get_next_step
     plsql_result = plsql.pk_qg_sc_step_engine.get_next_step(
       pi_auditable_type: step[:auditable_type], 
-      pi_pending_action: step[:pending_action], 
       pi_step_no: step[:step_no], 
       pi_step_status: step[:step_status], 
       pi_step_action: step[:step_action], 
@@ -104,7 +103,6 @@ describe 'Step' do
       po_next_step_no: nil, 
       po_next_step_action: nil, 
       po_next_step_name: nil, 
-      po_next_branch_no: nil, 
       po_txn_status: nil,
       po_fault_code: nil, 
       po_fault_subcode: nil, 
@@ -114,7 +112,6 @@ describe 'Step' do
     result[:next_step_no] = plsql_result[:po_next_step_no]
     result[:next_step_action] = plsql_result[:po_next_step_action]
     result[:next_step_name] = plsql_result[:po_next_step_name]
-    result[:next_step_branch_no] = plsql_result[:po_next_branch_no]
     result[:txn_status] = plsql_result[:po_txn_status]
     result[:fault_code] = plsql_result[:po_fault_code]
     result[:fault_subcode] = plsql_result[:po_fault_subcode]
@@ -417,21 +414,10 @@ describe 'Step' do
 
       context 'with status DONE' do
         let (:step) { super().merge({step_status: 'DONE'}) }
-        context 'with pending_action N' do
-          let (:step) { super().merge({pending_action: 'N'}) }
         
-          it 'should get next_step_no with action DO' do            
-            expect(get_next_step).to be_next_step(step)
-          end
+        it 'should get next_step_no with action DO' do            
+          expect(get_next_step).to be_next_step(step)
         end
-
-        context 'with pending_action Y' do
-          let (:step) { super().merge({pending_action: 'Y'}) }
-        
-          it 'should get txn_status ONHOLD' do 
-            expect(get_next_step).to be_onhold.with_pending_action
-          end
-        end        
       end
 
       context 'with status TRIED' do
@@ -443,21 +429,10 @@ describe 'Step' do
         end
         let (:step) { super().merge({step_status: 'TRIED'}) }
         
-        context 'with pending_action N' do
-          let (:step) { super().merge({pending_action: 'N'}) }
-        
-          it 'should get next_step_no with action DO' do            
-            expect(get_next_step).to be_next_step(step)
-          end
+        it 'should get next_step_no with action DO' do            
+          expect(get_next_step).to be_next_step(step)
         end
         
-        context 'with pending_action Y' do
-          let (:step) { super().merge({pending_action: 'Y'}) }
-        
-          it 'should get txn_status ONHOLD' do 
-            expect(get_next_step).to be_onhold.with_pending_action
-          end
-        end        
       end     
     end
   end
@@ -471,19 +446,9 @@ describe 'Step' do
         let (:step) { super().merge({step_status: 'REVERSED'}) }
         
         context 'with skip_reversal = N for previous step' do
-          context 'with pending_action = N' do
-            it 'should get prev_step_no with action REVERSE' do            
-              expect(get_next_step).to be_prev_step(step)
-            end
+          it 'should get prev_step_no with action REVERSE' do
+            expect(get_next_step).to be_prev_step(step)
           end
-
-          context 'with pending_action = Y' do
-            let (:step) { super().merge({pending_action: 'Y'}) }
-            it 'should get txn_status ONHOLD' do
-              expect(get_next_step).to be_onhold.with_pending_action
-            end
-          end
-
         end
         
         context 'with skip_reversal = Y for all remaining previous steps' do
@@ -665,107 +630,107 @@ describe 'Step' do
   
   
 
-  # context '(steps: 1)' do
-  #   before(:all) do
-  #     @setup = Setup.new('one step',1,2)
-  #     @first_step_no = 2
-  #     @last_step_no = @last_step_no
-  #     @step_no = @first_step_no
-  #   end
-  #
-  #   let (:first_step_no) { 2 }
-  #   let (:last_step_no) { first_step_no }
-  #   let (:step_no) { first_step_no }
-  #   let (:step) { super().merge({auditable_type: 'one step'})}
-  #
-  #   include_context 'first step'
-  #   include_context 'first and only step'
-  #   include_context 'last step'
-  #   include_context 'any step'
-  # end
-  #
-  #
-  # context '(steps: = 2)' do
-  #   before(:all) do
-  #     @setup = Setup.new('two steps', 2, 3)
-  #     @first_step_no = 3
-  #     @last_step_no = 4
-  #   end
-  #
-  #   let (:first_step_no) { 3 }
-  #   let (:last_step_no) { 4 }
-  #   let (:step) { super().merge({auditable_type: 'two steps'})}
-  #
-  #   include_context 'first step'
-  #   include_context 'last step'
-  #   include_context 'last step of many'
-  #
-  #   context '' do
-  #     before(:all) do
-  #       @step_no = @first_step_no
-  #     end
-  #     let (:step_no) { first_step_no }
-  #     include_context 'any step'
-  #     include_context 'except last of many steps'
-  #   end
-  #
-  #   context '' do
-  #     before(:all) do
-  #       @step_no = @last_step_no
-  #     end
-  #     let (:step_no) { last_step_no }
-  #     include_context 'any step'
-  #     include_context 'except first of many steps'
-  #   end
-  #
-  # end
-  #
-  # context '(steps: = 5)' do
- #    before(:all) do
- #      @setup = Setup.new('five steps', 5, 3)
- #      @first_step_no = 6
- #      @last_step_no = 10
- #    end
- #
- #    let (:first_step_no) { 6 }
- #    let (:last_step_no) { 10 }
- #    let (:step) { super().merge({auditable_type: 'five steps'})}
- #
- #    include_context 'first step'
- #    include_context 'last step'
- #    include_context 'last step of many'
- #
- #    context '' do
- #      before(:all) do
- #        @step_no = @first_step_no
- #      end
- #      let (:step_no) { first_step_no }
- #      include_context 'any step'
- #      include_context 'except last of many steps'
- #    end
- #
- #    (1..3).each do |i|
- #      context '' do
- #        before(:all) do
- #          @step_no = @first_step_no + i
- #        end
- #        let (:step_no) { first_step_no + i }
- #        include_context 'any step'
- #        include_context 'except last of many steps'
- #        include_context 'except first of many steps'
- #        include_context 'except first and last of many steps'
- #      end
- #    end
- #
- #    context '' do
- #      before(:all) do
- #        @step_no = @last_step_no
- #      end
- #      let (:step_no) { last_step_no }
- #      include_context 'any step'
- #      include_context 'except first of many steps'
- #    end
- #  end
+  context '(steps: 1)' do
+    before(:all) do
+      @setup = Setup.new('one step',1,2)
+      @first_step_no = 2
+      @last_step_no = @last_step_no
+      @step_no = @first_step_no
+    end
+
+    let (:first_step_no) { 2 }
+    let (:last_step_no) { first_step_no }
+    let (:step_no) { first_step_no }
+    let (:step) { super().merge({auditable_type: 'one step'})}
+
+    include_context 'first step'
+    include_context 'first and only step'
+    include_context 'last step'
+    include_context 'any step'
+  end
+
+
+  context '(steps: = 2)' do
+    before(:all) do
+      @setup = Setup.new('two steps', 2, 3)
+      @first_step_no = 3
+      @last_step_no = 4
+    end
+
+    let (:first_step_no) { 3 }
+    let (:last_step_no) { 4 }
+    let (:step) { super().merge({auditable_type: 'two steps'})}
+
+    include_context 'first step'
+    include_context 'last step'
+    include_context 'last step of many'
+
+    context '' do
+      before(:all) do
+        @step_no = @first_step_no
+      end
+      let (:step_no) { first_step_no }
+      include_context 'any step'
+      include_context 'except last of many steps'
+    end
+
+    context '' do
+      before(:all) do
+        @step_no = @last_step_no
+      end
+      let (:step_no) { last_step_no }
+      include_context 'any step'
+      include_context 'except first of many steps'
+    end
+
+  end
+
+  context '(steps: = 5)' do
+    before(:all) do
+      @setup = Setup.new('five steps', 5, 3)
+      @first_step_no = 6
+      @last_step_no = 10
+    end
+
+    let (:first_step_no) { 6 }
+    let (:last_step_no) { 10 }
+    let (:step) { super().merge({auditable_type: 'five steps'})}
+
+    include_context 'first step'
+    include_context 'last step'
+    include_context 'last step of many'
+
+    context '' do
+      before(:all) do
+        @step_no = @first_step_no
+      end
+      let (:step_no) { first_step_no }
+      include_context 'any step'
+      include_context 'except last of many steps'
+    end
+
+    (1..3).each do |i|
+      context '' do
+        before(:all) do
+          @step_no = @first_step_no + i
+        end
+        let (:step_no) { first_step_no + i }
+        include_context 'any step'
+        include_context 'except last of many steps'
+        include_context 'except first of many steps'
+        include_context 'except first and last of many steps'
+      end
+    end
+
+    context '' do
+      before(:all) do
+        @step_no = @last_step_no
+      end
+      let (:step_no) { last_step_no }
+      include_context 'any step'
+      include_context 'except first of many steps'
+    end
+  end
   
   context 'switch branch' do
     before(:all) do
@@ -775,7 +740,7 @@ describe 'Step' do
     context 'with a valid switch_to_branch' do
       let (:step) { super().merge({auditable_type: 'switch branch', step_no: 1, switch_to_branch: 2, step_status: 'DONE'})}
       it "should get_first_step 6 for branch 2 " do
-        expect(get_next_step).to be_first_step_of_branch(2, 6)
+        expect(get_next_step).to be_step_no(6)
       end
     end
 
